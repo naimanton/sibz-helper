@@ -1,9 +1,18 @@
-function () {
-function FormatProduct() {
-  blockList.insertAdjacentHTML(
-    "beforebegin", 
-    "<textarea>" + blockList.querySelector("table").innerText + "</textarea>"
-  )
+class FormatProduct {
+  constructor() {
+    blockList.insertAdjacentHTML(
+      "beforebegin",
+      "<input id=\"formatProductInput\" type=\"submit\" value=\"Получить форматный продукт\">"
+    )
+    formatProductInput.addEventListener("click", () => {
+      blockList.insertAdjacentHTML(
+        "beforebegin", 
+        "<textarea>" + blockList.querySelector("table").innerText + "</textarea>"
+      );
+    });
+
+  }
+
 }
 
 class Autoorder {
@@ -94,7 +103,7 @@ class AutofactureBuilder {
   _manageOrderTextareaCreating() {
     this.productTabs.insertAdjacentHTML(
       "beforeend",
-      `<textarea style="margin-left: 90px;" rows="5" cols="30" id="textareaOrder"></textarea>`
+      `<textarea placeholder="Вставьте заказ" style="margin-left: 90px;" rows="5" cols="30" id="textareaOrder"></textarea>`
     );
     this.textareaOrder = document.querySelector("#textareaOrder");
     this.textareaOrder.addEventListener(
@@ -136,10 +145,6 @@ class Autofacture extends AutofactureBuilder {
 
     let promise = await fetch("/ru/store/header/new/addproducts/", this.query_config);
     let promise_text = await promise.text();
-    console.group("Autofacture adding products query")
-    console.log(this.query_config)
-    console.log(JSON.parse(promise_text))
-    console.groupEnd();
 
     alert("Готово. Большинство пропущенных позиций указано в поле для таблицы");
 
@@ -147,8 +152,8 @@ class Autofacture extends AutofactureBuilder {
   }
   _skippedToTextarea() {
     let string = "Пропущенные позиции: ";
-    for (let line of this.skipped) {
-      string += line[0] + ", ";
+    for (let line = 0; line < this.skipped.length; line++) {
+      string += line + ", ";
     }
     return string;
   }
@@ -163,7 +168,7 @@ class Autofacture extends AutofactureBuilder {
     this.order = [];
     for ( let raw_line of this.textareaOrder.value.split("\n") ) {
       let line = raw_line.split("\t");
-      if (line[1] === "Код") continue;
+      if (line[0] === "Код") continue;
       this.order.push(line);
     }
   }
@@ -201,6 +206,27 @@ class Autofacture extends AutofactureBuilder {
   }
 }
 
-console.log("got!")
-console.log(Autoorder, Autofacture, FormatProduct);
+class ScriptChooser {
+  constructor() {
+    this.pathnames = {
+      autoorder: "/ru/store/header/order/showcase/new/",
+      autofacture: "/ru/store/header/new/edit/",
+      formatproduct: "/ru/store/header/order/showcase/new/",
+    };
+    this.choice = {};
+    this.choose.call(this, document.location.pathname);
+  }
+  choose(pathname) {
+    if (pathname === this.pathnames.autoorder) {
+     this.choice.autoorder = new Autoorder;
+    }
+    if (pathname === this.pathnames.autofacture) {
+      this.choice.autofacture = new Autofacture;
+    }
+    if (pathname === this.pathnames.formatproduct) {
+      this.choice.formatproduct = new FormatProduct;
+    }
+  }
 }
+
+new ScriptChooser;
