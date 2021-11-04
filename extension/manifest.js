@@ -5,8 +5,10 @@
 	"content_scripts": [
 	 	{
 			"matches": [
-                "https://ru.siberianhealth.com/ru/",
-                "https://kz.siberianhealth.com/ru/"
+                "https://ru.siberianhealth.com/ru/store/header/new/edit/",
+                "https://kz.siberianhealth.com/ru/store/header/new/edit/",
+                "https://ru.siberianhealth.com/ru/store/header/order/showcase/new/",
+                "https://kz.siberianhealth.com/ru/store/header/order/showcase/new/"
 	    	],
 	    	"js": ["content.js"]
 		}
