@@ -1,3 +1,4 @@
+function () {
 function FormatProduct() {
   blockList.insertAdjacentHTML(
     "beforebegin", 
@@ -198,4 +199,8 @@ class Autofacture extends AutofactureBuilder {
       amount: line[this.amount_column],
     });
   }
+}
+
+console.log("got!")
+console.log(Autoorder, Autofacture, FormatProduct);
 }
