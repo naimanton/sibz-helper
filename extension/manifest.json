@@ -1,12 +1,14 @@
 {
 	"name": "Sibz Helper",
-	"version": "2.0",
+	"version": "22.02.07",
 	"manifest_version": 3,
 	"content_scripts": [
 	 	{
 			"matches": [
 				"https://ru.siberianhealth.com/ru/",
 				"https://kz.siberianhealth.com/ru/",
+                "https://ru.siberianhealth.com/ru/store/header/new/create/",
+                "https://kz.siberianhealth.com/ru/store/header/new/create/",
                 "https://ru.siberianhealth.com/ru/store/header/new/edit/",
                 "https://kz.siberianhealth.com/ru/store/header/new/edit/",
                 "https://ru.siberianhealth.com/ru/store/header/order/showcase/new/",
