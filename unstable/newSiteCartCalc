@@ -14,9 +14,12 @@
 		var i = document.createElement('input');
 		i.title = c[0];
 		i.placeholder = c[0]; 
-		i.disabled = c[1]; 
+		i.disabled = c[1];
 		i.type = 'number';
 		i.className = 'sw-counter__input';
+		if (c[1] === true) {
+			i.style.backgroundColor = '#f8f8f8';
+		}
 		i.style.width = '90%';
 		wrapper.insertAdjacentElement('beforeend', i);
 		inputs.push(i);
