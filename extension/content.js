@@ -67,11 +67,6 @@ var sheContent = {
   		init() {
   			this.productTabs = document.querySelector('#productTabs');
         	this.productsCodes = JSON.parse(sheConfig.productsCodesJSON);
-  			this.itemRows = document.querySelectorAll('.itemRow');
-  			this.facturaItemsTrs = [...document.querySelectorAll('#facturaItems tr')];
-  			vfy(this.facturaItemsTrs.length > 6);
-  			this.finalTr = this.facturaItemsTrs[this.facturaItemsTrs.length-3];
-  			vfy(this.finalTr.innerText.includes('Итог'));
   			vfy(this.productTabs !== null);
 			this.productTabs.insertAdjacentHTML(
 	          "beforeend",
@@ -88,6 +83,11 @@ var sheContent = {
 	        this.textareaFactureToOrder.addEventListener('keydown', this.convert.bind(this));
   		},
   		convert(e) {
+  			this.itemRows = document.querySelectorAll('.itemRow');
+  			this.facturaItemsTrs = [...document.querySelectorAll('#facturaItems tr')];
+  			vfy(this.facturaItemsTrs.length > 6);
+  			this.finalTr = this.facturaItemsTrs[this.facturaItemsTrs.length-3];
+  			vfy(this.finalTr.innerText.includes('Итог'));
   			if (e.key === 'Delete' && !e.repeat && e.ctrlKey) {
         		var res = 'Код\tПродукт\tКоличество\tБаллы\tЦена\n';
         		for (var row of this.itemRows) {
