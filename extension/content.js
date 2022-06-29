@@ -45,10 +45,11 @@ var sheContent = {
     }
     else if (pathname === this.pathnames.facture) {
       this.choice.autoFacture = this.scripts.autoFacture.init();
+      this.choice.factureToOrder = this.scripts.factureToOrder.init();
     }
     else if (pathname === this.pathnames.index) {
       this.choice.jdivDisplayNoner = this.scripts.jdivDisplayNoner.init();
-      this.choice.autoCart = this.scripts.autoCart.init();
+      // this.choice.autoCart = this.scripts.autoCart.init();
     }
 
     if (
@@ -62,6 +63,76 @@ var sheContent = {
     }
   },
   scripts: {
+  	factureToOrder: {
+  		init() {
+  			this.productTabs = document.querySelector('#productTabs');
+        	this.productsCodes = JSON.parse(sheConfig.productsCodesJSON);
+  			this.itemRows = document.querySelectorAll('.itemRow');
+  			this.facturaItemsTrs = [...document.querySelectorAll('#facturaItems tr')];
+  			vfy(this.facturaItemsTrs.length > 6);
+  			this.finalTr = this.facturaItemsTrs[this.facturaItemsTrs.length-3];
+  			vfy(this.finalTr.innerText.includes('Итог'));
+  			vfy(this.productTabs !== null);
+			this.productTabs.insertAdjacentHTML(
+	          "beforeend",
+	          '<textarea ' + 
+	            sheConfig.style +
+	            'placeholder="Нажмите на поле и Ctrl+Delete" ' + 
+	            'style="margin-left: 90px;" ' + 
+	            'rows="5" ' + 
+	            'cols="30" ' + 
+	            'id="textareaFactureToOrder">' +
+	          '</textarea>'
+	        );
+	        this.textareaFactureToOrder = document.querySelector('#textareaFactureToOrder');
+	        this.textareaFactureToOrder.addEventListener('keydown', this.convert.bind(this));
+  		},
+  		convert(e) {
+  			if (e.key === 'Delete' && !e.repeat && e.ctrlKey) {
+        		var res = 'Код\tПродукт\tКоличество\tБаллы\tЦена\n';
+        		for (var row of this.itemRows) {
+        			let tds = row.children;
+        			res += this.findAnotherProductCodeIndice(tds[1].innerText) + '\t' +
+        				tds[2].innerText + '\t' +
+        				tds[3].children[0].value + '\t' +
+        				tds[4].innerText + '\t' +
+        				tds[5].innerText + '\n';
+        		}
+        		let finch = this.finalTr.children;
+        		res += 'Итог:\t\t' +  
+        			finch[3].innerText + '\t' + 
+        			finch[4].innerText + '\t' + 
+        			finch[6].innerText.replace(' (KZT)', '');
+        		this.textareaFactureToOrder.value = res;
+        	}
+  		},
+  		findAnotherProductCodeIndice(article) {
+	        l('SHE: Start searching another code for ' + article)
+	        var line;
+	        for (var i = 0; i < this.productsCodes.length; i++) {
+	          if (this.productsCodes[i].includes(article)) {
+	            line = i;
+	            break;
+	          }
+	        }
+
+	        vfy(
+	          line !== undefined,
+	          "Expected: this.productsCodes includes line with code: " + article
+	        );
+
+	        if (this.productsCodes[line][1] === this.productsCodes[line][2]) {
+	          return this.productsCodes[line][1];
+	        }
+	        if (this.productsCodes[line][1] === article) {
+	          return this.productsCodes[line][2];
+	        }
+	        if (this.productsCodes[line][2] === article) {
+	          return this.productsCodes[line][1]
+	        }
+
+	      }
+  	},
     formatProduct: {
       init() {
         l('SHE: formatProduct initializing...')
@@ -328,7 +399,7 @@ var sheContent = {
         this.autoCartArea.addEventListener("keydown", (function (e) {
           if(e.ctrlKey && e.key === "Delete" && !(e.repeat) ) {
             l('SHE: autoCartArea started products adding.')
-            this.run(window["userId"], this.autoCartArea.value)
+            this.run(String(window["userId"]), this.autoCartArea.value)
           }
         }).bind(this));
         l('SHE: autoCartArea initialized.');
