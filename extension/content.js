@@ -20,7 +20,11 @@ var vfy = function (assertion, description) {
   }
   console.log('Sibz Helper Extension: (' + description + ") was verified." )
 };
-
+var vfyEl = function (selector) {
+	var el = document.querySelector(selector);
+	vfy(el instanceof HTMLElement, selector + ' not found.');
+	return el;
+};
 var sheContent = {
   init() {
     l('SHE: sheContent initializing...');
@@ -29,6 +33,7 @@ var sheContent = {
       order: "/ru/store/header/order/showcase/new/",
       facture: "/ru/store/header/new/edit/",
       factureCreating: "/ru/store/header/new/create/",
+      headerNew: "/ru/store/header/new/",
     };
     this.choice = {};
     l("SHE: Scripts' choosing...");
@@ -44,12 +49,20 @@ var sheContent = {
       this.choice.orderCleaning = this.scripts.orderCleaning.init();
     }
     else if (pathname === this.pathnames.facture) {
+    	this.choice.selectCodesByNames = this.scripts.selectCodesByNames.init();
       this.choice.autoFacture = this.scripts.autoFacture.init();
       this.choice.factureToOrder = this.scripts.factureToOrder.init();
     }
     else if (pathname === this.pathnames.index) {
       this.choice.jdivDisplayNoner = this.scripts.jdivDisplayNoner.init();
       // this.choice.autoCart = this.scripts.autoCart.init();
+    }
+    else if (pathname === this.pathnames.headerNew) {
+    	this.choice.moreInfoAboutCustomer = this.scripts.moreInfoAboutCustomer.init();
+    }
+    else if(pathname === this.pathnames.factureCreating) {
+    	this.choice.editButtonForNewCreate = this.scripts.editButtonForNewCreate.init();
+    	this.choice.selectCodesByNames = this.scripts.selectCodesByNames.init();
     }
 
     if (
@@ -63,6 +76,106 @@ var sheContent = {
     }
   },
   scripts: {
+  	selectCodesByNames: {
+  		init() {
+  			let pool = [];
+  			let datalist = `<datalist id="sheCodesDatalist">`;
+  			let codes = JSON.parse(sheConfig.productsCodesJSON);
+  			for (let row of codes) {
+  				if (pool.includes(row[1])) continue;
+  				pool.push(row[1]);
+  				datalist += `<option value="${row[1]}">${row[0]}</option>`
+  			}
+  			pool = null;
+  			datalist += '</datalist>';
+  			let codeInput = vfyEl('#code');
+  			codeInput.insertAdjacentHTML('afterend', datalist);
+  			codeInput.setAttribute('list', 'sheCodesDatalist');
+  			codeInput.setAttribute('placeholder', 'Название');
+  			codes = null;
+  		},
+  	},
+  	editButtonForNewCreate: {
+  		init() {
+  			var delBoxCh3 = vfyEl('#delBox > div:nth-child(3)');
+  			var factura_Td = vfyEl('#delBox > div:nth-child(1) > table > tbody > tr > td:nth-child(1)');
+  			delBoxCh3.insertAdjacentHTML('afterbegin', `
+  				<form class="edForm" method="post" action="/ru/store/header/new/edit/">
+	                <input type="hidden" name="factura_id" value=${factura_Td.innerText}>
+	                <input type="submit" id="edit" class="btn" value="Перейти к редактированию фактуры">
+            	</form>
+  			`)
+  		},
+  	},
+  	moreInfoAboutCustomer: {
+  		init() {
+  			var submit = document.getElementById('submit');
+  			var inputFrom = document.querySelector('input[name=fromContract');
+
+  			vfy(submit instanceof HTMLElement, 'Submit-element was not found');
+  			vfy(inputFrom instanceof HTMLElement, 'InputFrom-element was not found');
+  			submit.insertAdjacentHTML('afterend', '<button '+sheConfig.style+' id="moreCustomerInfoButton" type="submit" style="margin: 5px !important;">Подробно</button><br><div id="moreCustomerInfoDiv"></div')
+			moreCustomerInfoButton.addEventListener('click', (e) => {
+			    e.preventDefault();
+  				vfy(inputFrom.value.length > 4, 'Выберите покупателя!'); 
+			    this.getInfoAboutCustomer.call(
+			    	this, 
+			    	inputFrom.value
+			    ).then(p => p.json().then( r => moreCustomerInfoDiv.innerHTML = this.rToHTML.call(this, r)) );
+			});
+			return this;
+  		},
+  		getInfoAboutCustomer(contract) {
+		    return fetch("https://kz.siberianhealth.com/ru/store/header/new/info_customer/", {
+		      "headers": {
+		        "accept": "application/json, text/javascript, */*; q=0.01",
+		        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+		        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+		        "ml-contract": "M11123",
+		        "sec-ch-ua": "\".Not/A)Brand\";v=\"99\", \"Google Chrome\";v=\"103\", \"Chromium\";v=\"103\"",
+		        "sec-ch-ua-mobile": "?0",
+		        "sec-ch-ua-platform": "\"Windows\"",
+		        "sec-fetch-dest": "empty",
+		        "sec-fetch-mode": "cors",
+		        "sec-fetch-site": "same-origin",
+		        "x-requested-with": "XMLHttpRequest"
+		      },
+		      "referrer": "https://kz.siberianhealth.com/ru/store/header/new/",
+		      "referrerPolicy": "strict-origin-when-cross-origin",
+		      "body": `contract=${contract}`,
+		      "method": "POST",
+		      "mode": "cors",
+		      "credentials": "include"
+		    });
+		},
+		rToHTML(r) {
+		    let d = r.data;
+		    console.log(d);
+		    let t = {
+		        true: 'да',
+		        false: 'нет',
+		        null: 'неизвестно',
+		        undefined: 'неизвестно',
+		    };
+		    let rank;
+		    if (typeof d.Rank === 'object' && d.Rank !== null) {
+		        rank = d.Rank.nameShort || d.Rank.name;
+		    }
+		    else {
+		        rank = t.null;
+		    }
+		    return `
+		        <br><span>Номер магазина: ${t[d.storeContract] || d.storeContract}</span><br>
+		        <span>День рождения: ${t[d.birthday] || d.birthday}</span><br>
+		        <span>Дата регистрации: ${t[d.dtRegister] || d.dtRegister.split('T')[0]}</span><br>
+		        <span>E-mail подтвержден: ${t[d.isEmailVerified]}</span><br>
+		        <span>Телефон подтвержден: ${t[d.isPhoneVerified]}</span><br>
+		        <span>Телефон: ${t[d.phoneRaw] || d.phoneRaw}</span><br>
+		        <span>Ранг: ${rank}</span><br>
+		        <span>Адрес: ${t[d.address] || d.address}</span><br>
+		    `
+		}
+  	},
   	factureToOrder: {
   		init() {
   			this.productTabs = document.querySelector('#productTabs');
