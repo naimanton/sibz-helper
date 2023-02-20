@@ -1,4 +1,5 @@
 var l = console.log;
+var qw = console.log;
 var sheConfig = {
   textareaCols: 'cols="25" ',
   style: 'style="border: orange 2px solid; '+ 
@@ -29,7 +30,6 @@ var sheContent = {
   init() {
     l('SHE: sheContent initializing...');
     this.pathnames = {
-      index: "/ru/",
       order: "/ru/store/header/order/showcase/new/",
       facture: "/ru/store/header/new/edit/",
       factureCreating: "/ru/store/header/new/create/",
@@ -52,10 +52,6 @@ var sheContent = {
     	this.choice.selectCodesByNames = this.scripts.selectCodesByNames.init();
       this.choice.autoFacture = this.scripts.autoFacture.init();
       this.choice.factureToOrder = this.scripts.factureToOrder.init();
-    }
-    else if (pathname === this.pathnames.index) {
-      this.choice.jdivDisplayNoner = this.scripts.jdivDisplayNoner.init();
-      // this.choice.autoCart = this.scripts.autoCart.init();
     }
     else if (pathname === this.pathnames.headerNew) {
     	this.choice.moreInfoAboutCustomer = this.scripts.moreInfoAboutCustomer.init();
@@ -268,22 +264,42 @@ var sheContent = {
         l('SHE: formatProductInput was placed.')
         var formatProductInput = document.querySelector("#formatProductInput");
 
-        formatProductInput.addEventListener("click", function () {
+        formatProductInput.addEventListener("click", () => {
           l("formatProduct starts formatting...")
-          var table = blockList.querySelector("table");
+          fetch("https://kz.siberianhealth.com/ru/store/header/order/showcase/search/", {
+            "headers": {
+              "accept": "application/json, text/javascript, */*; q=0.01",
+              "accept-language": "ru,en-US;q=0.9,en;q=0.8,bg;q=0.7",
+              "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "ml-contract": "M11123",
+              "sec-ch-ua": "\"Not_A Brand\";v=\"99\", \"Google Chrome\";v=\"109\", \"Chromium\";v=\"109\"",
+              "sec-ch-ua-mobile": "?0",
+              "sec-ch-ua-platform": "\"Windows\"",
+              "sec-fetch-dest": "empty",
+              "sec-fetch-mode": "cors",
+              "sec-fetch-site": "same-origin",
+              "x-requested-with": "XMLHttpRequest"
+            },
+            "referrer": "https://kz.siberianhealth.com/ru/store/header/order/showcase/new/",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "body": "searchType=category&category=0&name=&code=&days=0&cartId=" + this.getCartId(),
+            "method": "POST",
+            "mode": "cors",
+            "credentials": "include"
+          }).then(p => p.text().then(t => {
+            blockList.insertAdjacentHTML(
+              "beforebegin", 
+              "<textarea " + sheConfig.style + ">" + t + "</textarea>"
+            );
+          }));
 
-          vfy( 
-            table !== null, 
-            'Expected that document.querySelector("#blockList").querySelector("table") is not null.',
-          );
-
-          blockList.insertAdjacentHTML(
-            "beforebegin", 
-            "<textarea " + sheConfig.style + ">" + table.innerText + "</textarea>"
-          );
         });
         l('SHE: formatProductInput initialized.')
         return this;
+      },
+      getCartId() {
+        var match = document.body.innerHTML.match(/cart: {"id":(\d+),/);
+        return match[1];
       }
     },
     orderBackup: {
@@ -434,15 +450,15 @@ var sheContent = {
         );
 
         l('SHE: textareaAutoOrder was placed.')
-        var textareaAutoOrder = document.querySelector("#textareaAutoOrder");
-        textareaAutoOrder.addEventListener(
+        this.textareaAutoOrder = document.querySelector("#textareaAutoOrder");
+        this.textareaAutoOrder.addEventListener(
           "keydown",
           (function (e) {
             if (e.ctrlKey && e.key === "Delete" && !(e.repeat) ) {
               l('SHE: shOutputToOrder started.');
               this.shOutputToOrder.call(
                 this, 
-                textareaAutoOrder.value,
+                this.textareaAutoOrder.value,
                 blockList
               )
             }
@@ -459,7 +475,7 @@ var sheContent = {
 
           if ( ["Код", "Итог:"].includes(splitted[0]) ) continue; 
 
-          order[splitted[this.code_column]] = splitted[this.amount_column];
+          order[splitted[this.code_column]] = {am: splitted[this.amount_column], name: splitted[1]};
         }
         l('SHE: shOutput converted to order-object.')
         var trs = blockList.querySelectorAll("tr");
@@ -471,170 +487,30 @@ var sheContent = {
 
         for (var tr of trs) {
           var code = tr.children[2]?.innerText;
-          if (order[code]) {
-            for (var i = 0; i < +order[code]; i++) {
-              var btn_more = tr.querySelectorAll("button")[1];
-              
-              vfy(
-                btn_more !== null, 
-                'Expected: tr.querySelectorAll("button")[1] is not null.'
-                );
+          if (order[code] && +order[code].am > 0) {
+            var btn_more = tr.querySelectorAll("button")[1];
+            vfy(
+              btn_more !== null, 
+              'Expected: tr.querySelectorAll("button")[1] is not null.'
+              );
+            for (var i = 0; i < +order[code].am; i++) {
 
               btn_more.dispatchEvent(
                 new Event("click", { bubbles: true })
               )
             }
             l(code + ' added.')
+            delete order[code];
           }
         }
-        alert("Заказ сформирован");
-      }
-    },
-    autoCart: {
-      init() {
-        l('SHE: autoCart initializing...');
-        this.productsCodes = JSON.parse(sheConfig.productsCodesJSON);
-        this.autoCartArea = document.createElement("textarea");
-        this.autoCartArea.placeholder = "Вставьте заказ и нажмите Ctrl+Delete";
-        var navbarTopMenu = document.querySelector(".navbar-top__menu._geo");
-        
-        vfy(
-          navbarTopMenu !== null, 
-          'Expected: document.querySelector(".navbar-top__menu._geo") is not null.'
-        );
-
-        navbarTopMenu.insertAdjacentElement(
-          "afterend",
-          this.autoCartArea
-        );
-
-        l('SHE: autoCartArea was placed');
-        this.autoCartArea.addEventListener("keydown", (function (e) {
-          if(e.ctrlKey && e.key === "Delete" && !(e.repeat) ) {
-            l('SHE: autoCartArea started products adding.')
-            this.run(String(window["userId"]), this.autoCartArea.value)
-          }
-        }).bind(this));
-        l('SHE: autoCartArea initialized.');
-        return this;
-      },
-      shOutputToOrder(shOutput) {
-        if (!shOutput) return;
-
-        var order = {};
-
-        for (var line of shOutput.split("\n")) {
-            var splitted = line.split("\t");
-            if (["Код", "Итог:"].includes(splitted[0])) continue;
-            order[splitted[0]] = [splitted[1], splitted[2]];
-        }
-        return order;
-      },
-      run(contract, shOutput) {
-        vfy(
-          typeof contract === 'string', 
-          'Expected: contract-parameter is string-typed.'
-        );
-        var order = this.shOutputToOrder(shOutput);
-        this.autoCartArea.value = "";
-        var orderKeys = Object.keys(order);
-        for (var k in order) {
-          l(k + ' adding...');
-            this.add(
-              contract, 
-              k, 
-              order[k], 
-              k === orderKeys[orderKeys.length-1]
-            );
-        }
-      },
-      async add(contract, article, [name, amount], isLast) {
-        var fetchResult = await this.fetchProduct(contract, article, amount);
-        l({fetchResult})
-        var textResult = await fetchResult.text();
-        var objectResult = JSON.parse(textResult);
-        if (objectResult.success === false) {
-          l("First add-fetch failed.")
-          var indice = this.findAnotherProductCodeIndice.call(this, article);
-          if (indice[0] === 'same-codes') {
-            console.log(article + " adding fails (no other code).");
-            this.autoCartArea.value += ("Не удалось добавить " + `"${name}"\n`)
-            return;
-          }
-          var secondArticle = this.productsCodes[ indice[0] ][ indice[1] ]
-          console.log({secondArticle, product: this.productsCodes[ indice[0] ][0]}) 
-          var secondFetchResult = await this.fetchProduct(
-            contract, 
-            secondArticle,
-            amount
-          );
-
-          var secondTextResult = await secondFetchResult.text();
-          var secondObjectResult = JSON.parse(secondTextResult);
-          if (secondObjectResult.success === false) {
-            l(secondArticle + ' second fetch failed. Seems like bad code.')
-            this.autoCartArea.value += ("Не удалось добавить " + `"${name}"\n`);
+        var notAdded = '';
+        for (var code in order) {
+          if (isFinite(order[code].am) && +order[code].am > 0) {
+            notAdded += "" + order[code].name + ' --- ' + order[code].am + '\n\n';
           }
         }
-        if (isLast) {
-          var isCartRedirecting = confirm("Готово. Перейти в корзину?");
-          if(!isCartRedirecting) return;
-          location.pathname = "/ru/shop/cart/";
-        }
-      },
-      async fetchProduct(contract, article, amount) {
-        return await fetch(
-          "https://kz.siberianhealth.com/ru/shop/ajax/cart/item/add/", 
-          {
-          "headers": {
-            "accept": "application/json, text/plain, */*",
-            "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
-            "content-type": "application/json;charset=UTF-8",
-            "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"96\", \"Google Chrome\";v=\"96\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"Windows\"",
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-            "x-requested-with": "XMLHttpRequest"
-          },
-          "referrer": "https://kz.siberianhealth.com/ru/",
-          "referrerPolicy": "strict-origin-when-cross-origin",
-
-          "body": '{"productArticle":' + 
-            article + ',"optionArticle":' + 
-            article + ',"amount":' + amount + 
-            ',"packageContract":' + contract + '}',
-          
-          "method": "POST",
-          "mode": "cors",
-          "credentials": "include"
-        });
-      },
-      findAnotherProductCodeIndice(article) {
-        l('SHE: Start searching another code for ' + article)
-        var line;
-        for (var i = 0; i < this.productsCodes.length; i++) {
-          if (this.productsCodes[i].includes(article)) {
-            line = i;
-            break;
-          }
-        }
-
-        vfy(
-          line !== undefined,
-          "Expected: this.productsCodes includes line with code: " + article
-        );
-
-        if (this.productsCodes[line][1] === this.productsCodes[line][2]) {
-          return ["same-codes"];
-        }
-        if (this.productsCodes[line][1] === article) {
-          return [line, 2];
-        }
-        if (this.productsCodes[line][2] === article) {
-          return [line, 1];
-        }
+        alert("Заказ сформирован. Из заказа не были добавлены:\n\n" + notAdded);
+        this.textareaAutoOrder.value = "Заказ сформирован. Из заказа не были добавлены:\n\n" + notAdded;
 
       }
     },
@@ -767,14 +643,15 @@ var sheContent = {
         var promise = await fetch("/ru/store/header/new/addproducts/", this.query_config);
         var promise_text = await promise.text();
 
-        alert("Готово. Большинство пропущенных позиций указано в поле для таблицы");
-
         this.textareaOrder.value = this._skippedToTextarea.call(this);
+
+        alert(this.textareaOrder.value);
+
       },
       _skippedToTextarea() {
-        var string = "Пропущенные позиции: ";
-        for (var line = 0; line < this.skipped.length; line++) {
-          string += line + ", ";
+        var string = "Пропущенные позиции:\n\n";
+        for (var line of this.skipped) {
+          string += line[1] + " --- " + line[2] + '\n\n';
         }
         return string;
       },
@@ -789,7 +666,7 @@ var sheContent = {
         this.order = [];
         for ( var raw_line of this.textareaOrder.value.split("\n") ) {
           var line = raw_line.split("\t");
-          if (line[0] === "Код") continue;
+          if (line[0] === "Код" || line[0] === "Итог:") continue;
           this.order.push(line);
         }
       },
@@ -841,34 +718,6 @@ var sheContent = {
         });
       }
     },
-    jdivDisplayNoner: {
-      init() {
-        l('SHE: jdivDisplayNoner initializing...');
-        window.onload = (function () {
-          var interval = setInterval( (function () {
-            this.jdiv = document.querySelector('jdiv');
-            if (this.jdiv !== null) {
-              clearInterval(interval);
-              l("SHE: jdiv catched ;).")
-              this.run.call(this);
-            }
-          }).bind(this), 1000);
-        }).bind(this);
-        l('SHE: jdivDisplayNoner initialized.');
-      },
-      run() {
-        this.jdiv.style.display = 'none';
-        this.jsdivObserver = new MutationObserver(
-          (function () {
-            if (this.jdiv.style.display !== 'none') {
-              this.jdiv.style.display = 'none';
-            }
-          }).bind(this)
-        );
-
-        this.jsdivObserver.observe(this.jdiv, { attributes: true });
-      }
-    },
     allFactureItemsCheckbox: {
       init() {
         this.cookCheckbox.call(this);
@@ -907,19 +756,13 @@ var sheContent = {
           }
         });
       }
-    }
+    },
   }
 };
-
-
 try {
-
   sheContent.init();
-
 }
 catch(er) {
-
   alert(er);
   console.error(er.stack);
-
 }
