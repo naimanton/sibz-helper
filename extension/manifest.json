@@ -5,7 +5,7 @@
 	"content_scripts": [
 	 	{
 			"matches": [
-                		"https://ru.siberianwellness.com/kz-ru/cart/",
+                		"https://kz.siberianwellness.com/kz-ru/cart/",
 				"https://ru.siberianhealth.com/ru/store/header/new/",
 				"https://kz.siberianhealth.com/ru/store/header/new/",
 				"https://ru.siberianhealth.com/ru/store/header/new/create/",
