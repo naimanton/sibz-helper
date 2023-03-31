@@ -26,6 +26,7 @@ var vfyEl = function (selector) {
 	vfy(el instanceof HTMLElement, selector + ' not found.');
 	return el;
 };
+function getCookie(a){for(var b=document.cookie.split(";"),e,c=0;c<b.length;c++){var d=b[c].trim();0===d.indexOf(a+"\x3d")&&(e=d.substring((a+"\x3d").length,d.length))}return e}
 var sheContent = {
   init() {
     l('SHE: sheContent initializing...');
@@ -34,6 +35,7 @@ var sheContent = {
       facture: "/ru/store/header/new/edit/",
       factureCreating: "/ru/store/header/new/create/",
       headerNew: "/ru/store/header/new/",
+      wellnessCart: "/kz-ru/cart/",
     };
     this.choice = {};
     l("SHE: Scripts' choosing...");
@@ -56,6 +58,9 @@ var sheContent = {
     else if (pathname === this.pathnames.headerNew) {
     	this.choice.moreInfoAboutCustomer = this.scripts.moreInfoAboutCustomer.init();
     }
+    else if (pathname === this.pathnames.wellnessCart) {
+      this.choice.wellnessCartProductSearch = this.scripts.wellnessCartProductSearch.init();
+    }
     else if(pathname === this.pathnames.factureCreating) {
     	this.choice.editButtonForNewCreate = this.scripts.editButtonForNewCreate.init();
     	this.choice.selectCodesByNames = this.scripts.selectCodesByNames.init();
@@ -72,6 +77,236 @@ var sheContent = {
     }
   },
   scripts: {
+    wellnessCartProductSearch: {
+      autocompleteApiKey: 'JC5KJBC11N',
+      productSize: 30,
+      perPage: 30,
+      searchResultData: null,
+      clickedTr: null,
+      defaultPlace: {
+        cityId: 267,
+        regionId: 22,
+      },
+      init() {
+        this.definedPlace = this.definePlace();
+        if (this.definedPlace === false) {
+          this.definedPlace = this.defaultPlace;
+        }
+        document.head.insertAdjacentHTML(
+          'beforeend',
+          `<style>
+            #sheProductSearch {
+              background-color: #f4f4f4;
+              overflow-wrap: break-word;
+            }
+            #sheProductSearchTable td {
+              border: 1px solid;
+            }
+            #sheProductSearchTable a:hover {
+              color: rgb(102, 65, 240);
+            }
+            #sheGlobTr > td {
+              max-width: 50%;
+            }
+          </style>`
+        );
+        document.body.insertAdjacentHTML(
+          'afterend',
+          `<div id="sheProductSearch">
+            Идентификатор города: ${this.definedPlace.cityId} (267 - Караганда). <br>
+            <input style="padding: 5px;" id="sheProductSearchInput" placeholder="Поиск (Enter)">
+            <table>
+              <tr id="sheGlobTr">
+                <td valign="top" ><table id="sheProductSearchTable"></table></td>
+                <td valign="top" id="sheProductSearchInfo"></td>
+              </tr>
+            </table>
+          </div>`
+        );
+        sheProductSearchInput.addEventListener('change', () => {
+          if (sheProductSearchInput.value === '') {
+            sheProductSearchTable.innerHTML = ''
+            sheProductSearchInfo.innerHTML = ''
+            return;
+          }
+          this.search.call(this, sheProductSearchInput.value, this.productSize, this.perPage)
+          .then(r => {
+            var list = this.sift.call(this, r.List);
+            this.searchResultData = list;
+            this.visualizeSearchResult.call(this, sheProductSearchTable, list);
+          })
+        });
+        sheProductSearchTable.addEventListener('click', e => {
+          if (e.target.src === undefined) return;
+          if (this.clickedTr) {
+            this.clickedTr.style.backgroundColor = '';
+          } 
+          var path = e.composedPath();
+          this.clickedTr = path[2];
+          this.clickedTr.style.backgroundColor = 'white';
+          var index = path[2].getAttribute('data-sheIndex');
+          qw(this.searchResultData);
+          sheProductSearchInfo.innerHTML = '<b>' + path[2].children[2].innerHTML + '</b>' + 
+            '<hr><h3>Применение: </h3><br>' + this.searchResultData[index].useWay + 
+            '<hr><h3>Состав: </h3><br>' + this.searchResultData[index].composition + 
+            '<hr><h3>Описание: </h3><br>' + this.searchResultData[index].description
+        });
+      },
+      definePlace() {
+        var cityId = getCookie('currentCityId');
+        var regionId = getCookie('RegionId');
+        if (isFinite(cityId) && isFinite(regionId)) {
+          return {cityId, regionId}; 
+        }
+        return false;
+      },
+      sift(productList) {
+        var result = [];
+        for (var line of productList) {
+          var simple = {
+            options: [],
+            code: line.Code,
+            price: line.Price,
+            url: line.UrlCode,
+            points: line.Point,
+            weight: line.Weight,
+            discount: line.Discount,
+            fullName: line.NameFull,
+            oldPrice: line.OldPrice,
+            useWay: line.UseWayText,
+            description: line.Description,
+            isOnlyOnline: line.IsOnlyOnline,
+            remain: line.ProductSaldo.Volume,
+            composition: line.FullComposition,
+          };
+          if (line.Images[0] && line.Images[0] && line.Images[0].TinyUrl) {
+            simple.smallImageUrl = line.Images[0].SmallUrl;
+          }
+          if (line.SaleEndDate[0] !== '0') {
+            simple.sale = {
+              startDate: this.beautifySaleDate(line.SaleStartDate),
+              endDate: this.beautifySaleDate(line.SaleEndDate),
+            }
+          }
+          else if (line.Discount !== 0) {
+            simple.sale = {
+              startDate: 'месяц',
+              endDate: 'месяц',
+            } 
+          }
+          else {
+            simple.sale = {
+              startDate: '',
+              endDate: '',
+            } 
+          }
+          if (line.ProductOptions !== null) {
+            for (var option of line.ProductOptions) {
+              simple.options.push({
+                name: option.Name,
+                value: option.Value,
+              });
+            }
+          }
+          result.push(simple);
+        }
+        return result;
+      },
+      beautifySaleDate(date) {
+        var splitted = date.split('T');
+        splitted = [splitted[0], splitted[1].split('+')[0]];
+        return splitted.join(' - ');
+      },
+      search(st, productSize, perPage) {
+        return this.fetch.autocomplete.call(this,st, productSize)
+        .then(r => this.fetch.product(this.makeCodes(r), perPage, this.definedPlace.cityId, this.definedPlace.regionId));
+      },
+      makeCodes(autocompleteResult) {
+        vfy(typeof autocompleteResult === 'object' && autocompleteResult !== null);
+        vfy(autocompleteResult.products.length !== undefined);
+        var result = '';
+        for (var product of autocompleteResult.products) {
+          result += `Codes[]=${product.id}&`
+        }
+        return result;
+      },
+      visualizeSearchResult(table, productList) {
+        var html = `<tr>
+            <td>Карт.</td>
+            <td>Код</td>
+            <td>Название</td>
+            <td>Остаток</td>
+            <td>Баллы</td>
+            <td>Цена</td>
+            <td>Скидка</td>
+          </tr>`;
+        for (var index = 0; index < productList.length; index++) {
+          var item = productList[index];
+          var discPerc = (+item.oldPrice - +item.price) / +item.oldPrice * 100; 
+          html += `<tr data-sheIndex="${index}" >
+            <td><img src="${item.smallImageUrl}"></td>
+            <td><a href="${item.url}" target="_blank">${item.code}</a></td>
+            <td>${item.fullName}<br>${this.stringifyOptions(item.options)}</td>
+            <td>${item.remain}</td>
+            <td>${item.points}</td>
+            <td title="Только ИМ: ${item.isOnlyOnline ? 'Да' : 'Нет'}">${item.price}</td>
+            <td>${discPerc}%; ${item.discount} тенге<hr>Без скидки: ${item.oldPrice}<hr>с ${item.sale.startDate}<hr>до ${item.sale.endDate}</td>
+          </tr>`;
+        }
+        table.innerHTML = html;
+      },
+      stringifyOptions(options) {
+        var result = '';
+        for (var op of options) {
+          result += op.name + ' - ' + op.value + '; ';
+        }
+        return result;
+      },
+      fetch: {
+        autocomplete(st, productSize) {
+          return fetch(`https://autocomplete.diginetica.net/autocomplete?st=${st}&productsSize=${productSize}&apiKey=${this.autocompleteApiKey}&regionId=global&strategy=vectors_extended,zero_queries_predictor&forIs=true&showUnavailable=false&withContent=false&withSku=false&RegionId=22&LanguageId=9&UserTimeZone=6&CityId=4`, {
+            "headers": {
+              "accept": "application/json, text/plain, */*",
+              "accept-language": "ru,en-US;q=0.9,en;q=0.8,bg;q=0.7",
+              "sec-ch-ua": "\"Not_A Brand\";v=\"99\", \"Google Chrome\";v=\"109\", \"Chromium\";v=\"109\"",
+              "sec-ch-ua-mobile": "?0",
+              "sec-ch-ua-platform": "\"Windows\"",
+              "sec-fetch-dest": "empty",
+              "sec-fetch-mode": "cors",
+              "sec-fetch-site": "cross-site",
+              "token": getCookie('token')
+            },
+            "referrer": "https://kz.siberianwellness.com/",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "body": null,
+            "method": "GET",
+            "mode": "cors",
+            "credentials": "omit"
+          }).then(p => p.json().then(r => r));
+        },
+        product(codes, perPage, cityId, regionId) {
+          return fetch(`https://kz.siberianwellness.com/api/v1/product?${codes}CurrentPage=1&PerPage=${perPage}&CityId=${cityId}&RegionId=${regionId}&LanguageId=9&InputSearch=true&IsActive=true&SortBy=code&UserTimeZone=6`, {
+            "headers": {
+              "accept": "application/json, text/plain, */*",
+              "accept-language": "ru,en-US;q=0.9,en;q=0.8,bg;q=0.7",
+              "sec-ch-ua": "\"Not_A Brand\";v=\"99\", \"Google Chrome\";v=\"109\", \"Chromium\";v=\"109\"",
+              "sec-ch-ua-mobile": "?0",
+              "sec-ch-ua-platform": "\"Windows\"",
+              "sec-fetch-dest": "empty",
+              "sec-fetch-mode": "cors",
+              "sec-fetch-site": "same-origin",
+              "token": getCookie('token')
+            },
+            "referrer": "https://kz.siberianwellness.com/kz-ru/?mobileActiveType=menu&menu=main%2F1",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "body": null,
+            "method": "GET",
+            "mode": "cors",
+            "credentials": "include"
+          }).then(p => p.json().then(r => r));
+        }
+      }
+    },
   	selectCodesByNames: {
   		init() {
   			let pool = [];
