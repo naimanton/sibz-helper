@@ -1,6 +1,6 @@
 {
 	"name": "Sibz Helper",
-	"version": "23.2.20",
+	"version": "23.3.31",
 	"manifest_version": 3,
 	"content_scripts": [
 	 	{
