@@ -1,0 +1,23 @@
+{
+	"name": "Sibz Helper",
+	"version": "23.4.2",
+	"manifest_version": 3,
+	"content_scripts": [
+	 	{
+			"matches": [
+                		"https://kz.siberianwellness.com/kz-ru/cart/",
+				"https://ru.siberianhealth.com/ru/store/header/index/list/",
+				"https://kz.siberianhealth.com/ru/store/header/index/list/",
+				"https://ru.siberianhealth.com/ru/store/header/new/",
+				"https://kz.siberianhealth.com/ru/store/header/new/",
+				"https://ru.siberianhealth.com/ru/store/header/new/create/",
+				"https://kz.siberianhealth.com/ru/store/header/new/create/",
+				"https://ru.siberianhealth.com/ru/store/header/new/edit/",
+				"https://kz.siberianhealth.com/ru/store/header/new/edit/",
+				"https://ru.siberianhealth.com/ru/store/header/order/showcase/new/",
+				"https://kz.siberianhealth.com/ru/store/header/order/showcase/new/"
+	    	],
+	    	"js": ["content.js"]
+		}
+	]
+}
