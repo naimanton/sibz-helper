@@ -93,6 +93,7 @@ var sheContent = {
       init() {
         var inputs = [...document.querySelectorAll('#contract')];
         for (var i = 0; i < inputs.length; i++) {
+	  inputs[i].placeholder = 'Имя (Enter)';
           inputs[i].insertAdjacentHTML('afterend', `<datalist id="sheContractsDatalist${i}"></datalist>`)
           inputs[i].setAttribute('list', `sheContractsDatalist${i}`);
           inputs[i].addEventListener('change', ((i,e) => {
