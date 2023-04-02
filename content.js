@@ -93,35 +93,40 @@ var sheContent = {
       init() {
         var inputs = [...document.querySelectorAll('#contract')];
         for (var i = 0; i < inputs.length; i++) {
-	  inputs[i].placeholder = 'Имя (Enter)';
-          inputs[i].insertAdjacentHTML('afterend', `<datalist id="sheContractsDatalist${i}"></datalist>`)
-          inputs[i].setAttribute('list', `sheContractsDatalist${i}`);
-          inputs[i].addEventListener('change', ((i,e) => {
-            var datalist = document.querySelector('#sheContractsDatalist' + i);
-            if (e.target.value.length < 4) {
-              datalist.innerHTML = '';
-              return;
-            }
-            var isIncludingAnyNumber = includesAnyOf(
-              e.target.value,
-              "0123456789".split('')
-            );
-            if (isIncludingAnyNumber) return;
-            this.fetchContract(e.target.value).then(res => {
-              var options = ''
-              for (var opt of res.data) {
-              var closed = '';
-              if (opt.is_closed != 0) {
-                closed = '[З]'
-              }
-                options += `<option value="${opt.contract}"><i>${closed} ${opt.name}, ${opt.city_name}</i></option>`
-              }
-              datalist.innerHTML = options;
-            });
-
-          }).bind(this, i))
+          this.handleContractInputSearchUpgrade.call(
+            this, inputs[i], 'sheContractsDatalist' + i
+          );
         }
         return this;
+      },
+      handleContractInputSearchUpgrade(input, newDatalistId) {
+        input.placeholder = 'Имя (Enter)';
+        input.insertAdjacentHTML('afterend', `<datalist id="${newDatalistId}"></datalist>`)
+        input.setAttribute('list', newDatalistId);
+        input.addEventListener('change', ((newDatalistId,e) => {
+          var datalist = document.querySelector('#' + newDatalistId);
+          if (e.target.value.length < 4) {
+            datalist.innerHTML = '';
+            return;
+          }
+          var isIncludingAnyNumber = includesAnyOf(
+            e.target.value,
+            "0123456789".split('')
+          );
+          if (isIncludingAnyNumber) return;
+          this.fetchContract(e.target.value).then(((datalist,res) => {
+            var options = ''
+            for (var opt of res.data) {
+            var closed = '';
+            if (opt.is_closed != 0) {
+              closed = '[Закрыт]'
+            }
+              options += `<option value="${opt.contract}">${closed} ${opt.name}, ${opt.city_name}</option>`
+            }
+            datalist.innerHTML = options;
+          }).bind(this, datalist));
+
+        }).bind(this, newDatalistId))
       },
       fetchContract(pattern) {
         return fetch(`https://kz.siberianhealth.com/ru/store/header/new/search_customer/?pattern=${pattern}&isShowingClosed=1`, {
