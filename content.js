@@ -116,7 +116,9 @@ var sheContent = {
           if (isIncludingAnyNumber) return;
           this.fetchContract(e.target.value).then(((datalist,res) => {
             var options = ''
-            for (var opt of res.data) {
+            var opts = res.data.slice();
+            opts.sort( (a,b) => a.is_closed - b.is_closed)
+            for (var opt of opts) {
             var closed = '';
             if (opt.is_closed != 0) {
               closed = '[Закрыт]'
