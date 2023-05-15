@@ -1,11 +1,11 @@
 {
 	"name": "Sibz Helper",
-	"version": "23.4.2",
+	"version": "23.5.15",
 	"manifest_version": 3,
 	"content_scripts": [
 	 	{
 			"matches": [
-                		"https://kz.siberianwellness.com/kz-ru/cart/",
+                "https://kz.siberianwellness.com/kz-ru/cart/",
 				"https://ru.siberianhealth.com/ru/store/header/index/list/*",
 				"https://kz.siberianhealth.com/ru/store/header/index/list/*",
 				"https://ru.siberianhealth.com/ru/store/header/new/",
