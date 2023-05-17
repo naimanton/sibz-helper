@@ -1,0 +1,2 @@
+node updater.js
+cmd
