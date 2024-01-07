@@ -19,7 +19,7 @@
 				"https://ru.siberianhealth.com/ru/store/header/order/showcase/new/",
 				"https://kz.siberianhealth.com/ru/store/header/order/showcase/new/"
 	    	],
-	    	"js": ["content.js"],
+	    	"js": ["content.js"]
 		}
 	]
 }
