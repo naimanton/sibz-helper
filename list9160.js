@@ -1,8 +1,13 @@
 var list9160 = {
 	log: console.log,
 	cfg: {
-		lowPrice: 25,
-		highPrice: 44000,
+		// script config:
+		intervalMs: 4000,
+		productRequestIdsAmount: 20,
+		advancedInfo: false, // true add description, composition, useWay, weight, isOnlyOnline  
+		// query config:
+		lowPrice: 1,
+		highPrice: 440000,
 
 		cityId: 267,
 		regionId: 22,
@@ -10,16 +15,14 @@ var list9160 = {
 		userTimeZone: 6,
 		categoryId: 9160,
 		productPerPage: 21,
-		categoryPerPage: 700,
+		categoryPerPage: 7000,
 
-		isActive: true,
-		noMutation: true,
-		isDiscount: false,
-		isAvailable: true, // try change to "true", may be same products will vanish
-		isNotArchived: true,
-
-		intervalMs: 10000,
-		productRequestIdsAmount: 20,
+		// isActive: true,
+		// noMutation: true,
+		// isDiscount: false,
+		// isAvailable: true, // try change to "true", may be same products will vanish
+		// isNotArchived: true,
+		
 		sec_ch_ua_header: "\"Not_A Brand\";v=\"99\", \"Google Chrome\";v=\"109\", \"Chromium\";v=\"109\"",
 	},
 	progress: 0,
@@ -54,7 +57,7 @@ var list9160 = {
 		chunk(token, cfg, resolve, categoryItemResult, productResultsList) {
 			if (categoryItemResult.List.length <= 0) {
 				clearInterval(list9160.intervalId);
-				resolve( list9160.sift(productResultsList) );
+				resolve( list9160.sift.call(list9160, productResultsList) );
 				return;
 			}
 			list9160.fetch.product(
@@ -89,16 +92,20 @@ var list9160 = {
 				price: line.Price,
 				url: line.UrlCode,
 				points: line.Point,
-				weight: line.Weight,
 				discount: line.Discount,
 				fullName: line.NameFull,
 				oldPrice: line.OldPrice,
-				useWay: line.UseWayText,
-				description: line.Description,
-				isOnlyOnline: line.IsOnlyOnline,
 				remain: line.ProductSaldo.Volume,
-				composition: line.FullComposition,
 			};
+			if (this.cfg.advancedInfo) {
+				Object.assign(simple, {
+					weight: line.Weight,
+					useWay: line.UseWayText,
+					description: line.Description,
+					isOnlyOnline: line.IsOnlyOnline,
+					composition: line.FullComposition,
+				});
+			}
 			if (line.Images && line.Images[0] && line.Images[0].TinyUrl) {
 				simple.tinyImageUrl = line.Images[0].TinyUrl;
 			}
