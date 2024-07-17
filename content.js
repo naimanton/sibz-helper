@@ -1,10 +1,9 @@
-// изменить 1 на 0 в строке ниже, если в фактурах происходит ошибка.
+// изменить 0 на 1 при использовании на новых ссылках
+var LINK_VERSION = 1
+
+
+
 var more_Info_In_Facture_Is_On = 1; 
-
-
-
-
-
 var l = console.log;
 var qw = console.log;
 var sheConfig = {
@@ -46,12 +45,12 @@ var sheContent = {
   init() {
     l('SHE: sheContent initializing...');
     this.pathnames = {
-      order: "/ru/store/header/order/showcase/new/",
-      facture: "/ru/store/header/new/edit/",
-      factureCreating: "/ru/store/header/new/create/",
-      headerNew: "/ru/store/header/new/",
+      order: "/header/order/showcase/new/",
+      facture: "/header/new/edit/",
+      factureCreating: "/header/new/create/",
+      headerNew: "/header/new/",
       wellnessCart: "/kz-ru/cart/",
-      factureList: "/store/header/index/list/",
+      factureList: "/header/index/list/",
     };
     this.choice = {};
     l("SHE: Scripts' choosing...");
@@ -61,7 +60,8 @@ var sheContent = {
   },
   chooseScript(pathname) {
     // this.choice.fetchReassigning = this.scripts.fetchReassigning.init();
-    if (pathname.includes('/ru/') && document.body.innerText.includes('Страница доступна только авторизованным пользователям. Пожалуйста, введите ваш логин и пароль на странице')) {
+
+    if (/*pathname.includes('/ru/') &&*/ document.body.innerText.includes('Страница доступна только авторизованным пользователям. Пожалуйста, введите ваш логин и пароль на странице')) {
       var links = document.querySelectorAll('a');
       for (var li of links) {
         if (li.href.includes('/login')) {
@@ -75,13 +75,13 @@ var sheContent = {
     if (pathname.match(/cok|store/) !== null && pathname.match(/print/) === null) {
       this.choice.displayNoneBanner_mt10 = this.scripts.displayNoneBanner_mt10.init(); 
     }
-    if (pathname === this.pathnames.order) {
+    if (pathname.includes(this.pathnames.order)) {
       this.choice.autoOrder = this.scripts.autoOrder.init();
-      this.choice.formatProduct = this.scripts.formatProduct.init();
+      // this.choice.formatProduct = this.scripts.formatProduct.init();
       this.choice.orderBackup = this.scripts.orderBackup.init();
       this.choice.orderCleaning = this.scripts.orderCleaning.init();
     }
-    else if (pathname === this.pathnames.facture) {
+    else if (pathname.includes(this.pathnames.facture)) {
       
       if (more_Info_In_Facture_Is_On) {
         this.choice.moreInfoInFacture = this.scripts.moreInfoInFacture.init();
@@ -91,13 +91,16 @@ var sheContent = {
       this.choice.autoFacture = this.scripts.autoFacture.init();
       this.choice.factureToOrder = this.scripts.factureToOrder.init();
     }
-    else if (pathname === this.pathnames.headerNew) {
+    else if (
+      pathname.includes(this.pathnames.headerNew) && 
+      !(pathname.includes('edit') || pathname.includes('create')) 
+        ) {
     	this.choice.moreInfoAboutCustomer = this.scripts.moreInfoAboutCustomer.init();
     }
-    else if (pathname === this.pathnames.wellnessCart) {
+    else if (pathname.includes(this.pathnames.wellnessCart)) {
       this.choice.wellnessCartProductSearch = this.scripts.wellnessCartProductSearch.init();
     }
-    else if (pathname === this.pathnames.factureCreating) {
+    else if (pathname.includes(this.pathnames.factureCreating)) {
       
       if (more_Info_In_Facture_Is_On) {
         this.choice.moreInfoInFacture = this.scripts.moreInfoInFacture.init();
@@ -111,8 +114,8 @@ var sheContent = {
     }
 
     if (
-      pathname === this.pathnames.facture ||
-      pathname === this.pathnames.factureCreating
+      pathname.includes(this.pathnames.facture) ||
+      pathname.includes(this.pathnames.factureCreating)
     ) 
     {
       this.choice.allFactureItemsCheckbox = (
@@ -148,13 +151,36 @@ var sheContent = {
         if (percent >= 15 && lo < 100) return true;
       },
       getInfoAboutCustomer(contract) {
-        return fetch("https://kz.siberianhealth.com/ru/store/header/new/info_customer/", {
+        if (LINK_VERSION === 0) { 
+          return fetch("https://kz.siberianhealth.com/ru/store/header/new/info_customer/", {
+            "headers": {
+              "accept": "application/json, text/javascript, */*; q=0.01",
+              "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+              "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "ml-contract": "M11123",
+              "sec-ch-ua": "\".Not/A)Brand\";v=\"99\", \"Google Chrome\";v=\"109\", \"Chromium\";v=\"109\"",
+              "sec-ch-ua-mobile": "?0",
+              "sec-ch-ua-platform": "\"Windows\"",
+              "sec-fetch-dest": "empty",
+              "sec-fetch-mode": "cors",
+              "sec-fetch-site": "same-origin",
+              "x-requested-with": "XMLHttpRequest"
+            },
+            "referrer": "https://kz.siberianhealth.com/ru/store/header/new/",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "body": `contract=${contract}`,
+            "method": "POST",
+            "mode": "cors",
+            "credentials": "include"
+          });
+        }
+        return fetch("https://store.siberianhealth.com/kz-ru/header/new/info_customer/", {
           "headers": {
             "accept": "application/json, text/javascript, */*; q=0.01",
             "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
             "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
             "ml-contract": "M11123",
-            "sec-ch-ua": "\".Not/A)Brand\";v=\"99\", \"Google Chrome\";v=\"103\", \"Chromium\";v=\"103\"",
+            "sec-ch-ua": "\"Not_A Brand\";v=\"99\", \"Google Chrome\";v=\"109\", \"Chromium\";v=\"109\"",
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": "\"Windows\"",
             "sec-fetch-dest": "empty",
@@ -162,9 +188,9 @@ var sheContent = {
             "sec-fetch-site": "same-origin",
             "x-requested-with": "XMLHttpRequest"
           },
-          "referrer": "https://kz.siberianhealth.com/ru/store/header/new/",
+          "referrer": "https://store.siberianhealth.com/kz-ru/header/new/",
           "referrerPolicy": "strict-origin-when-cross-origin",
-          "body": `contract=${contract}`,
+          "body": "contract=" + contract,
           "method": "POST",
           "mode": "cors",
           "credentials": "include"
@@ -201,7 +227,10 @@ var sheContent = {
         return spl.reverse().join('.');
       },
       makeFacturesListLink(contract, startDate, endDate) {
+        if (LINK_VERSION === 0) {
           return 'https://kz.siberianhealth.com/ru/store/header/index/list/?item=&contract='+contract+'&for_contract=&date_s='+startDate+'&date_e='+endDate+'&search-type=&insert-flag=1&is_im=0';
+        }
+        return 'https://store.siberianhealth.com/kz-ru/header/index/list/?item=&contract='+contract+'&for_contract=&date_s='+startDate+'&date_e='+endDate+'&search-type=&completed=0&insert-flag=1&is_im=0';
       },
       getMonthDates() {
         var date = new Date;
@@ -282,7 +311,29 @@ var sheContent = {
         }).bind(this, newDatalistId))
       },
       fetchContract(pattern) {
-        return fetch(`https://kz.siberianhealth.com/ru/store/header/new/search_customer/?pattern=${pattern}&isShowingClosed=1`, {
+        if (LINK_VERSION === 0) {
+          return fetch(`https://kz.siberianhealth.com/ru/store/header/new/search_customer/?pattern=${pattern}&isShowingClosed=1`, {
+            "headers": {
+              "accept": "application/json, text/javascript, */*; q=0.01",
+              "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+              "ml-contract": "M11123",
+              "sec-ch-ua": "\"Not_A Brand\";v=\"99\", \"Google Chrome\";v=\"109\", \"Chromium\";v=\"109\"",
+              "sec-ch-ua-mobile": "?0",
+              "sec-ch-ua-platform": "\"Windows\"",
+              "sec-fetch-dest": "empty",
+              "sec-fetch-mode": "cors",
+              "sec-fetch-site": "same-origin",
+              "x-requested-with": "XMLHttpRequest"
+            },
+            "referrer": "https://kz.siberianhealth.com/ru/store/header/new/",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "body": null,
+            "method": "GET",
+            "mode": "cors",
+            "credentials": "include"
+          }).then(p=> p.json());
+        }
+        return fetch("https://store.siberianhealth.com/kz-ru/header/new/search_customer/?pattern="+pattern+"&isShowingClosed=1", {
           "headers": {
             "accept": "application/json, text/javascript, */*; q=0.01",
             "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -295,7 +346,7 @@ var sheContent = {
             "sec-fetch-site": "same-origin",
             "x-requested-with": "XMLHttpRequest"
           },
-          "referrer": "https://kz.siberianhealth.com/ru/store/header/new/",
+          "referrer": "https://store.siberianhealth.com/kz-ru/header/new/",
           "referrerPolicy": "strict-origin-when-cross-origin",
           "body": null,
           "method": "GET",
@@ -597,28 +648,51 @@ var sheContent = {
   			return this;
   		},
   		getInfoAboutCustomer(contract) {
-		    return fetch("https://kz.siberianhealth.com/ru/store/header/new/info_customer/", {
-		      "headers": {
-		        "accept": "application/json, text/javascript, */*; q=0.01",
-		        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
-		        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-		        "ml-contract": "M11123",
-		        "sec-ch-ua": "\".Not/A)Brand\";v=\"99\", \"Google Chrome\";v=\"103\", \"Chromium\";v=\"103\"",
-		        "sec-ch-ua-mobile": "?0",
-		        "sec-ch-ua-platform": "\"Windows\"",
-		        "sec-fetch-dest": "empty",
-		        "sec-fetch-mode": "cors",
-		        "sec-fetch-site": "same-origin",
-		        "x-requested-with": "XMLHttpRequest"
-		      },
-		      "referrer": "https://kz.siberianhealth.com/ru/store/header/new/",
-		      "referrerPolicy": "strict-origin-when-cross-origin",
-		      "body": `contract=${contract}`,
-		      "method": "POST",
-		      "mode": "cors",
-		      "credentials": "include"
-		    });
-		  },
+        if (LINK_VERSION === 0) { 
+          return fetch("https://kz.siberianhealth.com/ru/store/header/new/info_customer/", {
+            "headers": {
+              "accept": "application/json, text/javascript, */*; q=0.01",
+              "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+              "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "ml-contract": "M11123",
+              "sec-ch-ua": "\".Not/A)Brand\";v=\"99\", \"Google Chrome\";v=\"109\", \"Chromium\";v=\"109\"",
+              "sec-ch-ua-mobile": "?0",
+              "sec-ch-ua-platform": "\"Windows\"",
+              "sec-fetch-dest": "empty",
+              "sec-fetch-mode": "cors",
+              "sec-fetch-site": "same-origin",
+              "x-requested-with": "XMLHttpRequest"
+            },
+            "referrer": "https://kz.siberianhealth.com/ru/store/header/new/",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "body": `contract=${contract}`,
+            "method": "POST",
+            "mode": "cors",
+            "credentials": "include"
+          });
+        }
+        return fetch("https://store.siberianhealth.com/kz-ru/header/new/info_customer/", {
+          "headers": {
+            "accept": "application/json, text/javascript, */*; q=0.01",
+            "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "ml-contract": "M11123",
+            "sec-ch-ua": "\"Not_A Brand\";v=\"99\", \"Google Chrome\";v=\"109\", \"Chromium\";v=\"109\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "x-requested-with": "XMLHttpRequest"
+          },
+          "referrer": "https://store.siberianhealth.com/kz-ru/header/new/",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "body": "contract=" + contract,
+          "method": "POST",
+          "mode": "cors",
+          "credentials": "include"
+        });
+      },
     	rToHTML(r) {
   	    let d = r.data;
   	    console.log(d);
@@ -1016,7 +1090,7 @@ var sheContent = {
               "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
               "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
               "ml-contract": intranet.innerText,
-              "sec-ch-ua": "\"Chromium\";v=\"92\", \" Not A;Brand\";v=\"99\", \"Google Chrome\";v=\"92\"",
+              "sec-ch-ua": "\"Chromium\";v=\"109\", \" Not A;Brand\";v=\"99\", \"Google Chrome\";v=\"109\"",
               "sec-ch-ua-mobile": "?0",
               "sec-fetch-dest": "empty",
               "sec-fetch-mode": "cors",
@@ -1088,7 +1162,13 @@ var sheContent = {
 
         this._turnQueryOrderToQueryConfig.call(this);
 
-        var promise = await fetch("/ru/store/header/new/addproducts/", this.query_config);
+        var promise;
+        if (LINK_VERSION === 0) {
+          promise = await fetch("/ru/store/header/new/addproducts/", this.query_config);
+        }
+        else {
+          promise = await fetch("/kz-ru/header/new/addproducts/", this.query_config);
+        }
         var promise_text = await promise.text();
 
         this.textareaOrder.value = this._skippedToTextarea.call(this);
