@@ -622,7 +622,7 @@ var sheContent = {
   			var delBoxCh3 = vfyEl('#delBox > div:nth-child(3)');
   			var factura_Td = vfyEl('#delBox > div:nth-child(1) > table > tbody > tr > td:nth-child(1)');
   			delBoxCh3.insertAdjacentHTML('afterbegin', `
-  				<form class="edForm" method="post" action="/ru/store/header/new/edit/">
+  				<form class="edForm" method="post" action="${location.href.replace('create', 'edit')}">
 	                <input type="hidden" name="factura_id" value=${factura_Td.innerText}>
 	                <input type="submit" id="edit" class="btn" value="Перейти к редактированию фактуры">
             	</form>
@@ -1167,7 +1167,7 @@ var sheContent = {
           promise = await fetch("/ru/store/header/new/addproducts/", this.query_config);
         }
         else {
-          promise = await fetch("/kz-ru/header/new/addproducts/", this.query_config);
+          promise = await fetch(location.href.replace('edit', 'addproducts'), this.query_config);
         }
         var promise_text = await promise.text();
 
