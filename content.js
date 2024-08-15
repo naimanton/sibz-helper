@@ -464,7 +464,7 @@ var sheContent = {
           if (line.Images && line.Images[0] && line.Images[0].Url) {
             simple.smallImageUrl = line.Images[0].Url;
           }
-          if (line.SaleEndDate[0] !== '0') {
+          if (line.SaleEndDate !== null && line.SaleEndDate[0] !== '0') {
             simple.sale = {
               startDate: this.beautifySaleDate(line.SaleStartDate),
               endDate: this.beautifySaleDate(line.SaleEndDate),
