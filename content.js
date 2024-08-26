@@ -1,7 +1,3 @@
-void async function () {
-	
-if (!document.location.href.includes('siberian')) return;
-
 // изменить 0 на 1 при использовании на новых ссылках
 var LINK_VERSION = 1
 
@@ -1300,4 +1296,3 @@ var sheContent = {
     console.error(er.stack);
   }
 }) ();
-} ();
