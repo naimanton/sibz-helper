@@ -1,3 +1,14 @@
+// ==UserScript==
+// @name        Sibz Helper Extension Script
+// @namespace   Violentmonkey Scripts
+// @match       *://*/*
+// @grant       none
+// @version     1.0
+// @author      -
+// @description no
+// ==/UserScript==
+
+
 // изменить 0 на 1 при использовании на новых ссылках
 var LINK_VERSION = 1
 
