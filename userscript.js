@@ -36,7 +36,7 @@ var sheConfig = {
     'background-color: lightyellow" ', // end-space required
     // productsCodesJSON: ``
 }
-const encryptedPantryKey = 'cGO7MegatLOr30spw2rz4XO2OgEkOQqwRqR8ae/+TXWhlD83HUP5sRB4S5j4gy5TQw3v8Riet41NCo2zwKZxSLDAyYyUqMkob52rZRoTFMw=';
+const encryptedPantryKey = 'Ug5+tzAQzXUfVLw8P3kjRwxFq4L3ItUriXdpshgysdHuNZoerHY8ojh+L1VGXWgOp4Bn3J5qLiUqsYjdKUiur3SQaJN6rgv/+rHsM9EpuAM=';
 var vfy = function (assertion, description) {
   if ( assertion !== true && assertion !== false ) {
     throw new Error("conditionWrapper-parameter must return boolean value.");
@@ -192,7 +192,6 @@ class XMLHttpRequestProxy {
           if (isFullCatalogRequest) {
             const sendToPantry = confirm('Получен актуальный каталог продуктов. Обновить его на сайте?');
             if (!sendToPantry) return;
-            qw(this)
             const password = sheContent.scripts.pantryCatalogUpdater.handlePassword();
             const catalog = sheContent.scripts.pantryCatalogUpdater.cookPantryCatalog(this.responseText);
             sheContent.scripts.pantryCatalogUpdater.sendCatalog(catalog, password);
@@ -452,9 +451,11 @@ var sheContent = {
         l('SHE: panrtyCatalogUpdater initialized');
       },
       handlePassword() {
-        var password = localStorage.getItem('sheEncPassword');
-        if (!password) {
-          password = prompt('Пароль шифрования Sibz-Helper');
+        var password = prompt('Пароль шифрования Sibz-Helper (оставить пустым, если ранее вводился)');
+        if (password === '') {
+          password = localStorage.getItem('sheEncPassword')
+        }
+        else {
           localStorage.setItem('sheEncPassword', password);
         }
         return password;
@@ -479,29 +480,35 @@ var sheContent = {
         return converted;
       },
       async sendCatalog(catalog, password) {
-        var myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-
-        var raw = JSON.stringify({
+        const apitoken = await cipher.decrypt(encryptedPantryKey, password);
+        const data = {
           timestamp: Date.now(),
           products: catalog
-        });
-
-        var requestOptions = {
-          method: 'POST',
-          headers: myHeaders,
-          body: raw,
-          redirect: 'follow'
-        };
-        const pantryKey = await cipher.decrypt(encryptedPantryKey, password);
-        fetch(`https://getpantry.cloud/apiv1/pantry/${pantryKey}/basket/sh`, requestOptions)
-          .then(response => {
+        }
+        async function patchData() {
+          try {
+            const response = await fetch(`https://lively-cavern-b1dc.codehooks.io/a/68de89c67c9dfb6b7bf58043`, {
+              method: 'PATCH',
+              headers: { 'x-apikey': apitoken, 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
             if (response.ok) {
               alert('Каталог обновлен');
             } else {
-              alert('ОШИБКА. Не удалось обновить каталог: ' + response.status);
+              alert('ОШИБКА. Не удалось обновить каталог: ' + response.status)
+              throw new Error(`HTTP error! status: ${response.status}`);
             }
-          })
+            return response.json();
+          } catch (error) {
+            console.error('Fetch error:', error);
+            throw error;
+          }
+        }
+        patchData().then(responseData => {
+          console.log('Response data:', responseData);
+        })
+        .catch(error => {
+          console.error('Error in patchData:', error);
+        });
       }
     },
     displayNoneBanner_mt10: {
