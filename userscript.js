@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Sibz-Helper
 // @namespace    http://tampermonkey.net/
-// @version      2025-07-21
+// @version      2025-10-15
 // @description  sibz-helper extension
 // @author       a
 // @match        https://store.siberianhealth.com/kz-ru/*
@@ -21,6 +21,8 @@
 // @match        https://kz.siberianhealth.com/ru/store/header/order/showcase/new/
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 // @grant        unsafeWindow
+// @grant        GM_getValue
+// @grant        GM_setValue
 // ==/UserScript==
 
 // изменить 0 на 1 при использовании на новых ссылках
@@ -453,10 +455,10 @@ var sheContent = {
       handlePassword() {
         var password = prompt('Пароль шифрования Sibz-Helper (оставить пустым, если ранее вводился)');
         if (password === '') {
-          password = localStorage.getItem('sheEncPassword')
+          password = GM_getValue('sheEncPassword', null)
         }
         else {
-          localStorage.setItem('sheEncPassword', password);
+          GM_setValue('sheEncPassword', password);
         }
         return password;
       },
